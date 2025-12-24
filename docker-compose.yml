@@ -87,11 +87,11 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/24
-  
+        - subnet: 172.22.0.0/24
+
   internal_net:
     driver: bridge
-    internal: false  # Set to false to allow outbound, but not directly accessible from host
+    internal: false # Set to false to allow outbound, but not directly accessible from host
     ipam:
       config:
         - subnet: 10.10.10.0/24

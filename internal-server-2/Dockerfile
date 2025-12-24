@@ -1,7 +1,9 @@
 FROM debian:bullseye-slim
 
 # Install Apache, Perl, Samba, and additional vulnerable services
-RUN apt-get update && apt-get install -y \
+RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     apache2 \
     libapache2-mod-perl2 \
     libcgi-pm-perl \

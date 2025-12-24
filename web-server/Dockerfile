@@ -1,7 +1,9 @@
 FROM php:7.4-apache
 
 # Install system dependencies and pentesting tools
-RUN apt-get update && apt-get install -y \
+RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     wget \
     curl \
     netcat-traditional \
@@ -17,9 +19,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Chisel for tunneling
-RUN wget https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_linux_amd64.gz \
-    && gunzip chisel_1.9.1_linux_amd64.gz \
-    && mv chisel_1.9.1_linux_amd64 /usr/local/bin/chisel \
+RUN arch=$(uname -m) && \
+    if [ "$arch" = "x86_64" ]; then chisel_arch="amd64"; else chisel_arch="arm64"; fi && \
+    wget https://github.com/jpillora/chisel/releases/download/v1.9.1/chisel_1.9.1_linux_${chisel_arch}.gz \
+    && gunzip chisel_1.9.1_linux_${chisel_arch}.gz \
+    && mv chisel_1.9.1_linux_${chisel_arch} /usr/local/bin/chisel \
     && chmod +x /usr/local/bin/chisel
 
 # Enable Apache modules

@@ -1,7 +1,9 @@
 FROM debian:bullseye-slim
 
 # Install vsftpd
-RUN apt-get update && apt-get install -y \
+RUN echo 'Acquire::Retries "3";' > /etc/apt/apt.conf.d/80-retries && \
+    apt-get update && \
+    DEBIAN_FRONTEND=noninteractive apt-get install -y --fix-missing \
     vsftpd \
     && rm -rf /var/lib/apt/lists/*
 
