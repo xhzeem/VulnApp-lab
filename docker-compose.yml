@@ -1,0 +1,97 @@
+version: '3.8'
+
+services:
+  # Database for web server
+  db:
+    image: mysql:5.7
+    container_name: pentest-db
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-webapp}
+      MYSQL_USER: ${MYSQL_USER:-webuser}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-webpass123}
+    networks:
+      - public_net
+    volumes:
+      - ./web-server/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+
+  # Public-facing vulnerable web server
+  web-server:
+    build: ./web-server
+    container_name: pentest-web
+    ports:
+      - "8080:80"
+    depends_on:
+      - db
+    environment:
+      DB_HOST: db
+      DB_NAME: ${MYSQL_DATABASE:-webapp}
+      DB_USER: ${MYSQL_USER:-webuser}
+      DB_PASS: ${MYSQL_PASSWORD:-webpass123}
+    networks:
+      - public_net
+      - internal_net
+    volumes:
+      - ./web-server/www:/var/www/html
+      - ./web-server/logs:/var/log/apache2
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+      - NET_RAW
+
+  # Unauthorized FTP server
+  ftp-server:
+    build: ./ftp-server
+    container_name: pentest-ftp
+    ports:
+      - "2121:21"
+      - "21000-21010:21000-21010"
+    networks:
+      - public_net
+    restart: unless-stopped
+
+  # Internal Server 1: Web + SSH (SSH key exposed)
+  internal-server-1:
+    build: ./internal-server-1
+    container_name: internal-web-ssh
+    networks:
+      - internal_net
+    volumes:
+      - ./internal-server-1/www:/var/www/html
+    restart: unless-stopped
+
+  # Internal Server 2: SMB + Web (Vulnerable SMB)
+  internal-server-2:
+    build: ./internal-server-2
+    container_name: internal-smb-web
+    networks:
+      - internal_net
+    volumes:
+      - ./internal-server-2/www:/var/www/html
+      - ./internal-server-2/shares:/srv/samba/shares
+    restart: unless-stopped
+
+  # Internal Server 3: Multiple vulnerable services
+  internal-server-3:
+    build: ./internal-server-3
+    container_name: internal-multi-service
+    networks:
+      - internal_net
+    environment:
+      MYSQL_ROOT_PASSWORD: toor
+    restart: unless-stopped
+
+networks:
+  public_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
+  
+  internal_net:
+    driver: bridge
+    internal: false  # Set to false to allow outbound, but not directly accessible from host
+    ipam:
+      config:
+        - subnet: 10.10.10.0/24

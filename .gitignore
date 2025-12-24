@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# Logs
+*.log
+web-server/logs/
+
+# Uploaded files
+web-server/www/uploads/
+
+# SSH keys
+*.pem
+*.key
+!internal-server-1/setup.sh
+
+# Docker volumes
+internal-server-2/shares/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
